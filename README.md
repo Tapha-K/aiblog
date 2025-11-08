@@ -2,20 +2,21 @@
 
 -   프로젝트 계획 수립
     [x] FEATURE.md에 작성
--   [ ]3-Tier 아키테처 개발 환경 구성
+-   [x] 3-Tier 아키테처 개발 환경 구성
     -   Client (Vite + React + Typescript)
-        -   [ ] axios 설치 및 기본 API 요청 함수 모듈화
-        -   [ ] owner, repo 입력을 받는 폼 UI 구현
-        -   [ ] API 요청: '조회' 버튼 클릭 시 Express 서버(POST /api/github)로 owner, repo 전송
-        -   [ ] API 응답: 서버로부터 받은 GitHub 데이터(커밋/PR 목록) fetch
-        -   [ ] 기본 렌더링: 받아온 데이터를 간단한 목록(list) 형태로 렌더링
-        -   [ ] 로딩/에러 UI: API 요청 상태에 따른 로딩 스피너 및 에러 메시지 처리
+        -   [x] axios 설치 및 기본 API 요청 함수 모듈화
+        -   [x] owner, repo 입력을 받는 폼 UI 구현
+        -   [x] API 요청: '조회' 버튼 클릭 시 Express 서버(POST /api/github)로 owner, repo 전송
+        -   [x] API 응답: 서버로부터 받은 GitHub 데이터(커밋/PR 목록) fetch
+        -   [x] 기본 렌더링: 받아온 데이터를 간단한 목록(list) 형태로 렌더링
+        -   [x] 로딩/에러 UI: API 요청 상태에 따른 로딩 스피너 및 에러 메시지 처리
+        -   [x] UI 개선
     -   Server (Express)
-        -   [ ] cors, dotenv, axios (또는 node-fetch) 설치
-        -   [ ] 보안: .env 파일을 사용해 GITHUB_TOKEN 안전하게 관리
-        -   [ ] 프록시 엔드포인트: POST /api/github 구현
-        -   [ ] GitHub API 연동: Client 요청을 받아 GitHub GraphQL API로 대신 요청
-        -   [ ] 데이터 전달: GitHub로부터 받은 JSON 데이터를 Client로 그대로 전달
+        -   [x] cors, dotenv, axios (또는 node-fetch) 설치
+        -   [x] 보안: .env 파일을 사용해 GITHUB_TOKEN 안전하게 관리
+        -   [x] 프록시 엔드포인트: POST /api/github 구현
+        -   [x] GitHub API 연동: Client 요청을 받아 GitHub GraphQL API로 대신 요청
+        -   [x] 데이터 전달: GitHub로부터 받은 JSON 데이터를 Client로 그대로 전달
 
 ## 2주차: LLM 연동 및 블로그 콘텐츠 생성
 
