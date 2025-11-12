@@ -22,14 +22,14 @@
 
 -   [ ] AI 요약 기능 연동 및 UI 고도화
     -   Client (Vite + React + TypeScript)
-        -   [ ] AI 요약 요청: 목록에서 특정 항목 클릭 시, 'AI 요약' 버튼으로 서버에 요약 요청 (POST /api/summarize)
+        -   [x] AI 요약 요청: 목록에서 특정 항목 클릭 시, 'AI 요약' 버튼으로 서버에 요약 요청 (POST /api/summarize)
         -   [ ] UI/UX 개선: 1주차 목록 UI 개선 (TailwindCSS 활용)
-        -   [ ] 상세 UI: 요약 결과를 보여줄 모달(Modal) 또는 상세 패널(Panel) 구현
+        -   [x] 상세 UI: 요약 결과를 보여줄 모달(Modal) 또는 상세 패널(Panel) 구현
     -   Server (Express)
         -   [x] 보안: .env 파일에 GEMINI_API_KEY 추가
         -   [x] AI 엔드포인트: POST /api/summarize 엔드포인트 구현
         -   [x] 프롬프트 엔지니어링: Client로부터 받은 텍스트(커밋 메시지, PR 내용 등)를 기반으로 Gemini API에 전송할 프롬프트 작성
-        -   [ ] LLM 연동: Google Gemini API 호출 및 응답 데이터 정제
+        -   [x] LLM 연동: Google Gemini API 호출 및 응답 데이터 정제
         -   [ ] AI 응답: 정제된 요약 텍스트를 Client로 전달
 
 ## 3주차: 콘텐츠 저장 및 관리 (LocalStorage)

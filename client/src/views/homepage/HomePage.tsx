@@ -52,17 +52,28 @@ const HomePage: React.FC = () => {
         }
     };
 
-    const handleGenerateSummary = (commit: CommitNode) => {
-        setSelectedCommit(commit);
+    const handleGenerateSummary = async (commit: CommitNode) => {
+        setSelectedCommit(commit); // 요약할 커밋을 선택
         setIsAiLoading(true);
         setAiSummary("");
 
-        setTimeout(() => {
-            setAiSummary(
-                `This is a mock AI summary for the commit: "${commit.node.messageHeadline}". Real summary will be fetched from Gemini API.`
+        try {
+            // 1. 백엔드 서버의 /api/summarize로 커밋 메시지를 보냄
+            const response = await axios.post(
+                "http://localhost:8000/api/summarize",
+                {
+                    commitMessage: commit.node.messageHeadline, // 요약할 텍스트
+                }
             );
+
+            // 2. 백엔드로부터 받은 요약 텍스트를 state에 저장
+            setAiSummary(response.data.summary);
+        } catch (err) {
+            console.error("Failed to generate summary:", err);
+            setAiSummary("Error: Failed to generate summary.");
+        } finally {
             setIsAiLoading(false);
-        }, 1500);
+        }
     };
 
     const handleSavePost = () => {
