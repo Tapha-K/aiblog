@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import cors from "cors";
 import dotenv from "dotenv";
 import axios from "axios";
@@ -7,12 +8,19 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 8000;
+const allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
 
 app.use(
     cors({
-        origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
-        methods: ["GET", "POST", "OPTIONS"], // 허용할 HTTP 메소드 명시
-        allowedHeaders: ["Content-Type", "Authorization"], // 허용할 헤더 명시
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        methods: ["GET", "POST", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
 
@@ -24,7 +32,7 @@ app.get("/api/test", (req: Request, res: Response) => {
     res.json({ message: "안녕하세요! Express 서버에서 보낸 응답입니다." });
 });
 
-// GitHub 프록시 엔드포인트
+// 1주차: GitHub 프록시 엔드포인트
 // client한테 받은 repository 주소를 받고 Github API로 데이터 요청
 app.post("/api/github", async (req: Request, res: Response) => {
     const { owner, repo } = req.body;
@@ -101,6 +109,65 @@ app.post("/api/github", async (req: Request, res: Response) => {
         res.status(500).json({
             error: "GitHub API 요청 중 오류가 발생했습니다.",
         });
+    }
+});
+
+// 2주차 서버 구현
+// Gemini API 클라이언트 초기화
+const geminiApiKey = process.env.GEMINI_API_KEY || "";
+if (!geminiApiKey) {
+    console.warn(
+        "[Server] ⚠️ GEMINI_API_KEY가 .env 파일에 설정되지 않았습니다. /api/summarize 엔드포인트가 작동하지 않습니다."
+    );
+}
+const genAI = new GoogleGenerativeAI(geminiApiKey);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+app.post("/api/summarize", async (req: Request, res: Response) => {
+    if (!geminiApiKey) {
+        return res
+            .status(500)
+            .json({ error: "Gemini API 키가 설정되지 않았습니다." });
+    }
+
+    try {
+        // 1. React가 보낸 커밋 메시지를 받습니다.
+        const { commitMessage } = req.body;
+
+        if (!commitMessage) {
+            return res
+                .status(400)
+                .json({ error: "No commit message provided" });
+        }
+
+        // 2. 프롬프트 엔지니어링
+        const prompt = `
+      You are a helpful programming assistant.
+      Summarize the following GitHub commit message concisely, focusing on the main action and purpose.
+      Respond in 1-2 sentences. Keep the summary technical but clear.
+      
+      Commit Message:
+      """
+      ${commitMessage}
+      """
+      
+      Summary:
+    `;
+
+        console.log("[Server] /api/summarize: Gemini API 요청 중...");
+
+        // 3. Gemini API 호출
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        const summary = response.text();
+
+        console.log("[Server] /api/summarize: Gemini API 응답 성공.");
+
+        // 4. React에 요약된 텍스트를 응답으로 보냅니다.
+        res.status(200).json({ summary: summary });
+    } catch (error) {
+        console.error("[Server] /api/summarize: Gemini API 요청 실패:", error);
+        res.status(500).json({ error: "Failed to generate summary" });
     }
 });
 
