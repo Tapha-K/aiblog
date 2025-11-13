@@ -23,7 +23,7 @@ const CommitListSection: React.FC<CommitListSectionProps> = ({
     onSelect,
 }) => {
     return (
-        <section className="px-8 w-[600px] flex-0">
+        <section className="px-8 w-[600px] flex-shrink-0">
             <SectionTitle>Recent Commits</SectionTitle>
             {loading && (
                 <div className="flex justify-center items-center h-64">

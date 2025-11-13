@@ -48,12 +48,12 @@ app.post("/api/github", async (req: Request, res: Response) => {
       query GetCommits($owner: String!, $repo: String!) {
         repository(owner: $owner, name: $repo) {
           defaultBranchRef {
-            name
             target {
               ... on Commit {
                 history(first: 10) {
                   edges {
                     node {
+                      oid   # 고유 ID(커밋 해시) 추가
                       messageHeadline
                       committedDate
                       author {

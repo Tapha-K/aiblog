@@ -88,6 +88,13 @@ const HomePage: React.FC = () => {
         alert("Blog post saved!");
     };
 
+    // 커밋을 선택하고, 기존 AI 요약 내용과 로딩 상태를 초기화합니다.
+    const handleSelectCommit = (commit: CommitNode) => {
+        setSelectedCommit(commit);
+        setAiSummary("");
+        setIsAiLoading(false);
+    };
+
     return (
         <>
             <RepoForm
@@ -106,7 +113,7 @@ const HomePage: React.FC = () => {
                     commits={commits}
                     selectedCommit={selectedCommit}
                     onGenerateSummary={handleGenerateSummary}
-                    onSelect={setSelectedCommit}
+                    onSelect={handleSelectCommit}
                 />
 
                 <SummarySection
