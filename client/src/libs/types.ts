@@ -26,3 +26,11 @@ export interface GitHubApiResponse {
     // GraphQL 에러가 발생할 경우
     errors?: { message: string }[];
 }
+
+// 저장된 글 타입 정의
+export interface SavedPost {
+    id: string; // 커밋 해시(oid)를 ID로 사용
+    commit: CommitNode; // 원본 커밋 정보
+    aiSummary: string; // 생성된 요약
+    savedAt: string; // 저장된 날짜 (ISO string)
+}

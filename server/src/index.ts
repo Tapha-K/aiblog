@@ -115,47 +115,86 @@ app.post("/api/summarize", async (req: Request, res: Response) => {
     }
 
     try {
-        // 1. React가 보낸 커밋 메시지, 커스텀 프롬프트를 받습니다.
-        const { commitMessage, customPrompt } = req.body;
+        // 1. [수정] sha(oid), owner, repo를 추가로 받습니다.
+        const { commitMessage, customPrompt, sha, owner, repo } = req.body;
 
-        if (!commitMessage) {
+        if (!commitMessage || !sha || !owner || !repo) {
             return res
                 .status(400)
-                .json({ error: "No commit message provided" });
+                .json({ error: "Missing required fields (sha, owner, repo)" });
         }
 
-        // 2. 프롬프트 엔지니어링
-        const promptTemplate =
+        // 2. [추가] GitHub API로 해당 커밋의 상세 내용(Diff)을 가져옵니다.
+        console.log(`[Server] GitHub Diff 요청: ${owner}/${repo}/${sha}`);
+
+        let codeDiff = "";
+        try {
+            const commitDetailUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${sha}`;
+            const githubResponse = await axios.get(commitDetailUrl, {
+                headers: {
+                    Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            // 3. [추가] 변경된 파일들의 코드 조각(patch)을 추출하여 합칩니다.
+            const files = githubResponse.data.files || [];
+
+            // 토큰 절약을 위해 최대 5개 파일, 파일당 2000자까지만 가져옵니다.
+            for (const file of files.slice(0, 5)) {
+                if (file.patch) {
+                    codeDiff += `\n--- File: ${file.filename} ---\n`;
+                    // 너무 긴 코드는 자릅니다.
+                    codeDiff +=
+                        file.patch.length > 2000
+                            ? file.patch.slice(0, 2000) + "\n...(truncated)..."
+                            : file.patch;
+                }
+            }
+            if (files.length > 5) {
+                codeDiff += `\n...(and ${files.length - 5} more files)...`;
+            }
+        } catch (ghError) {
+            console.error(
+                "[Server] GitHub Diff 가져오기 실패 (요약은 계속 진행):",
+                ghError
+            );
+            codeDiff = "Could not retrieve code changes (Diff).";
+        }
+
+        // 4. [수정] 프롬프트에 Diff 내용을 포함시킵니다.
+        const instructions =
             customPrompt ||
-            `
-      You are a helpful programming assistant.
-      Summarize the following GitHub commit message concisely, focusing on the main action and purpose.
-      Respond in 1-2 sentences. Keep the summary technical but clear.
-    `.trim();
+            `You are a helpful programming assistant.
+       Analyze the provided commit message and the code diff.
+       Summarize the changes concisely in a technical blog post style.
+       Focus on *what* changed in the code and *why*.
+       Respond in 1-2 sentences.`;
 
-        // 만약 커스텀 프롬프트가 있다면, 커밋 메시지를 변수처럼 주입합니다.
         const finalPrompt = `
-      ${promptTemplate}
+      ${instructions}
 
-      Commit Message to summarize:
+      [Commit Message]
       """
       ${commitMessage}
       """
+
+      [Code Changes (Diff)]
+      """
+      ${codeDiff || "No code changes available."}
+      """
     `;
 
-        console.log("[Server] /api/summarize: Gemini API 요청 중...");
+        console.log("[Server] Gemini에게 Diff 포함 요청 전송...");
 
-        // 3. Gemini API 호출
         const result = await model.generateContent(finalPrompt);
         const response = result.response;
         const summary = response.text();
 
-        console.log("[Server] /api/summarize: Gemini API 응답 성공.");
-
-        // 4. React에 요약된 텍스트를 응답으로 보냅니다.
+        console.log("[Server] /api/summarize: 응답 성공");
         res.status(200).json({ summary: summary });
     } catch (error) {
-        console.error("[Server] /api/summarize: Gemini API 요청 실패:", error);
+        console.error("[Server] /api/summarize: 요청 실패:", error);
         res.status(500).json({ error: "Failed to generate summary" });
     }
 });
