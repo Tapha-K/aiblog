@@ -115,49 +115,47 @@ app.post("/api/summarize", async (req: Request, res: Response) => {
     }
 
     try {
-        // 1. React가 보낸 커밋 메시지, 커스텀 프롬프트를 받습니다.
         const { commitMessage, customPrompt } = req.body;
 
+        // 1. 커밋 메시지가 없으면 에러
         if (!commitMessage) {
             return res
                 .status(400)
                 .json({ error: "No commit message provided" });
         }
 
-        // 2. 프롬프트 엔지니어링
-        const prompt =
+        // 2. [수정] '안내 문구(Instruction)' 결정
+        // 클라이언트가 보낸 커스텀 프롬프트가 있으면 그걸 쓰고, 없으면 백엔드 기본값을 씁니다.
+        const instructions =
             customPrompt ||
-            `
-      You are a helpful programming assistant.
-      Summarize the following GitHub commit message concisely, focusing on the main action and purpose.
-      Respond in 1-2 sentences. Keep the summary technical but clear.
-      
-      Commit Message:
+            `You are a helpful programming assistant.
+       Summarize the following GitHub commit message concisely.
+       Respond in 1-2 sentences.`;
+
+        // 3. [핵심 수정] 안내 문구와 커밋 메시지를 '무조건' 결합합니다.
+        // 이전에는 이 결합 로직이 조건문에 따라 누락되는 경우가 있었습니다.
+        const finalPrompt = `
+      ${instructions}
+
+      Here is the Commit Message to summarize:
       """
       ${commitMessage}
       """
-      
-      Summary:
     `;
 
-        // 만약 커스텀 프롬프트가 있다면, 커밋 메시지를 변수처럼 주입합니다.
-        const finalPrompt = customPrompt
-            ? `${customPrompt}\n\nCommit Message to summarize:\n"""${commitMessage}"""`
-            : prompt;
+        console.log("[Server] /api/summarize: Gemini에게 요청 보냄...");
 
-        console.log("[Server] /api/summarize: Gemini API 요청 중...");
+        // (디버깅용) 실제 Gemini로 나가는 프롬프트 확인
+        // console.log(finalPrompt);
 
-        // 3. Gemini API 호출
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(finalPrompt);
         const response = result.response;
         const summary = response.text();
 
-        console.log("[Server] /api/summarize: Gemini API 응답 성공.");
-
-        // 4. React에 요약된 텍스트를 응답으로 보냅니다.
+        console.log("[Server] /api/summarize: 응답 성공");
         res.status(200).json({ summary: summary });
     } catch (error) {
-        console.error("[Server] /api/summarize: Gemini API 요청 실패:", error);
+        console.error("[Server] /api/summarize: 요청 실패:", error);
         res.status(500).json({ error: "Failed to generate summary" });
     }
 });
